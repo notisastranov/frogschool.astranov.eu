@@ -15,7 +15,14 @@
     <button class="sb-btn ghost tiny" id="loginBtn" type="button">Login</button>
   </header>
 
-  <section class="sb-card sb-video-card"><div class="sb-video-shell" id="sbVideoShell"></div></section>
+  <section class="sb-profile-block">
+    <div class="sb-media-cover sb-media-zone" data-media="cover" id="sbMediaCover"></div>
+    <div class="sb-topbar-spacer"></div>
+    <div class="sb-media-profile sb-media-zone" data-media="profile" id="sbMediaProfile"></div>
+  </section>
+
+  <section class="sb-card sb-video-card"><div class="sb-video-shell sb-media-zone" data-media="video" id="sbVideoShell"></div></section>
+  <div class="sb-media-bg-zone sb-media-zone sb-hidden" data-media="background" id="sbMediaBgZone" title="Page background">◎ Background</div>
 
   <section class="sb-section-title"><h2>Reserve Your Session</h2><small class="sb-muted" id="activeUserText">Guest · progressive booking</small></section>
 
@@ -100,6 +107,25 @@
   </div>
 </div>
 
+<div class="sb-modal" id="sbMediaModal">
+  <div class="sb-sheet">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <h2 style="font-family:var(--sb-display);color:var(--sb-accent);margin:0" id="sbMediaModalTitle">Media</h2>
+      <button class="sb-btn ghost tiny" type="button" id="sbMediaCloseBtn">Close</button>
+    </div>
+    <div class="sb-media-preview-box" id="sbMediaPreview"></div>
+    <div class="sb-actions" style="margin-bottom:8px">
+      <button class="sb-btn" type="button" id="sbMediaChangeBtn">Change</button>
+      <input id="sbMediaFile" type="file" class="sb-hidden" />
+    </div>
+    <div class="sb-field sb-hidden" id="sbMediaUrlRow">
+      <label class="sb-label">YouTube URL (optional instead of upload)</label>
+      <input id="sbMediaYoutubeUrl" type="url" placeholder="https://www.youtube.com/watch?v=...">
+    </div>
+    <button class="sb-btn red" type="button" id="sbMediaApplyBtn">Save</button>
+  </div>
+</div>
+
 <div class="sb-modal" id="sbChatModal">
   <div class="sb-sheet">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -125,7 +151,8 @@ window.ASTRANOV_SUPERBOOKING_CONFIG = {
   rpcPrefix: 'fs_',
   decentral: { enabled: true, nodeUrl: 'http://127.0.0.1:8787' },
   branding: { title: 'AstranoV FrogSchool', subtitle: 'Diving · MartialSthenics · Rhodes' },
-  videoUrl: 'https://www.youtube.com/watch?v=DH02kmLRgUA&t=71s'
+  youtubeUrl: 'https://www.youtube.com/watch?v=DH02kmLRgUA&t=71s',
+  youtubeChannelUrl: 'https://www.youtube.com/@notisastranov'
 };
 </script>
 <script src="core/superbooking-config.js"></script>
@@ -135,6 +162,7 @@ window.ASTRANOV_SUPERBOOKING_CONFIG = {
 <script src="core/booker-adapters.js"></script>
 <script src="core/superbooking-messenger.js"></script>
 <script src="core/superbooking-agreement.js"></script>
+<script src="core/superbooking-media.js"></script>
 <script>
 const SB = SuperBooking;
 const CONFIG = SB.mergeConfig(window.ASTRANOV_SUPERBOOKING_CONFIG);
@@ -150,7 +178,7 @@ if (!CONFIG.contact?.phone) CONFIG.contact = { phone: '+306971930225', vhf: 'Fro
 
 const adapter = SuperBookingAdapters.slot(CONFIG);
 let rows = [], formState = { activeStage: 'schedule', values: {} };
-let messenger = null, agreement = null;
+let messenger = null, agreement = null, siteMedia = null;
 
 async function init() {
   SB.initShell(CONFIG);
@@ -165,6 +193,7 @@ async function init() {
   bind();
   messenger = SuperBookingMessenger.init(adapter, CONFIG, { openLogin, toast: m => SB.toast(m) });
   agreement = SuperBookingAgreement.init(adapter, CONFIG, { toast: m => SB.toast(m) });
+  siteMedia = SuperBookingMedia.init(adapter, CONFIG, { toast: m => SB.toast(m) });
 }
 
 function $(id) { return document.getElementById(id); }
@@ -231,6 +260,8 @@ function renderPortal() {
   const isStaff = s && ['admin', 'super_admin', 'employee'].includes(s.role);
   $('adminPanel').classList.toggle('sb-hidden', !isStaff || !['admin', 'super_admin'].includes(s.role));
   $('sbChatClientRow')?.classList.toggle('sb-hidden', !isStaff);
+  $('sbMediaBgZone')?.classList.toggle('sb-hidden', !s || !['admin', 'super_admin'].includes(s.role));
+  siteMedia?.refresh?.();
   if (!s) { $('bookingList').innerHTML = 'Login required.'; return; }
   let list = [...rows];
   if (s.role === 'customer') list = list.filter(r => clean(r.phone) === clean(s.phone));
@@ -298,6 +329,7 @@ function bind() {
       closeLogin();
       renderPortal();
       agreement?.loadAgreement?.();
+      siteMedia?.refresh?.();
       SB.toast('Logged in.');
     } catch (err) { SB.toast(err.message || 'Login failed.'); }
   };
