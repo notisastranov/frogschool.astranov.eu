@@ -1,6 +1,6 @@
-# frogschool.astranov.eu · SuperBooking
+# frogschool.astranov.eu · Astranov Sites
 
-FrogSchool reservations on the AstranoV **SuperBooking** engine — **central database** (`lkoatrkhuigdolnjsbie`).
+FrogSchool reservations on the AstranoV **Astranov Sites** engine — **central database** (`lkoatrkhuigdolnjsbie`).
 
 ## Domain
 
@@ -44,4 +44,4 @@ Run migrations from `superbooking` repo against central AstranoV Supabase:
 
 ## Decentralized Server
 
-Writes sync to Astranov node apps when `SuperBookingDecentral.registerNode(url)` is set (Windows/Mac/Android/iOS).
+Writes sync to Astranov node apps when `AstranovSitesDecentral.registerNode(url)` is set (Windows/Mac/Android/iOS).
