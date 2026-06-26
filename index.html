@@ -103,6 +103,11 @@
   <div class="sb-sheet">
     <div style="display:flex;justify-content:space-between;align-items:center"><h2 style="font-family:var(--sb-display);color:var(--sb-accent);margin:0">Login / Sign Up</h2><button class="sb-btn ghost tiny" onclick="closeLogin()">Close</button></div>
     <p class="sb-muted">Astranov Identity on <a href="https://astranov.eu" target="_blank" rel="noopener" style="color:var(--sb-accent)">astranov.eu</a> (Google · email · phone) signs you in here too when owner. Guests: phone + email + password below.</p>
+    <div class="sb-actions" style="margin:8px 0">
+      <button class="sb-btn" type="button" id="authGoogleBtn">Google</button>
+      <button class="sb-btn ghost" type="button" id="authFacebookBtn">Facebook</button>
+    </div>
+    <p class="sb-muted" style="font-size:11px;margin:0 0 8px">— or guest booking login —</p>
     <p id="loginError" class="sb-muted" style="color:var(--sb-bad,#ff7f9a);min-height:18px;margin:6px 0"></p>
     <form id="loginForm">
       <div class="sb-field"><label class="sb-label">Phone</label><input name="phone" type="tel" required autocomplete="tel"></div>
@@ -332,6 +337,28 @@ function bind() {
     if (s) { adapter.setSession(null); rows = []; renderPortal(); return; }
     openLogin();
   };
+  $('authGoogleBtn')?.addEventListener('click', async () => {
+    const errEl = $('loginError');
+    if (errEl) errEl.textContent = '';
+    try {
+      await window.AstranovAuthBridge?.signInOAuth?.('google');
+    } catch (err) {
+      const msg = err.message || 'Google sign-in failed';
+      if (errEl) errEl.textContent = msg;
+      SB.toast(msg);
+    }
+  });
+  $('authFacebookBtn')?.addEventListener('click', async () => {
+    const errEl = $('loginError');
+    if (errEl) errEl.textContent = '';
+    try {
+      await window.AstranovAuthBridge?.signInOAuth?.('facebook');
+    } catch (err) {
+      const msg = err.message || 'Facebook sign-in failed';
+      if (errEl) errEl.textContent = msg;
+      SB.toast(msg);
+    }
+  });
   $('loginForm').onsubmit = async e => {
     e.preventDefault();
     const errEl = $('loginError');
