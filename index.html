@@ -146,6 +146,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="core/astranov-shell.js"></script>
 <script>
 window.ASTRANOV_SUPERBOOKING_CONFIG = {
   siteId: 'frogschool',
@@ -161,6 +162,7 @@ window.ASTRANOV_SUPERBOOKING_CONFIG = {
 };
 </script>
 <script src="core/superbooking-config.js"></script>
+<script src="core/astranov-auth-bridge.js"></script>
 <script src="core/superbooking-decentral.js"></script>
 <script src="core/booker-fields.js"></script>
 <script src="core/booker-core.js"></script>
@@ -168,8 +170,9 @@ window.ASTRANOV_SUPERBOOKING_CONFIG = {
 <script src="core/superbooking-messenger.js"></script>
 <script src="core/superbooking-agreement.js"></script>
 <script src="core/superbooking-media.js"></script>
+<script src="core/astranov-sites-editor.js"></script>
 <script>
-const SB = SuperBooking;
+const SB = window.AstranovSites || window.SuperBooking;
 const CONFIG = SB.mergeConfig(window.ASTRANOV_SUPERBOOKING_CONFIG);
 CONFIG.businessType = CONFIG.businessType || 'diving_school';
 CONFIG.mode = CONFIG.mode || 'slot';
@@ -183,7 +186,7 @@ if (!CONFIG.contact?.phone) CONFIG.contact = { phone: '+306971930225', vhf: 'Fro
 
 const adapter = SuperBookingAdapters.slot(CONFIG);
 let rows = [], formState = { activeStage: 'schedule', values: {} };
-let messenger = null, agreement = null, siteMedia = null;
+let messenger = null, agreement = null, siteMedia = null, siteEditor = null;
 
 async function init() {
   SB.initShell(CONFIG);
@@ -200,7 +203,8 @@ async function init() {
   bind();
   messenger = SuperBookingMessenger.init(adapter, CONFIG, { openLogin, toast: m => SB.toast(m) });
   agreement = SuperBookingAgreement.init(adapter, CONFIG, { toast: m => SB.toast(m) });
-  siteMedia = SuperBookingMedia.init(adapter, CONFIG, { toast: m => SB.toast(m) });
+  siteMedia = (window.AstranovSitesMedia || SuperBookingMedia).init(adapter, CONFIG, { toast: m => SB.toast(m) });
+  siteEditor = (window.AstranovSitesEditor || window.SuperBookingEditor)?.init(adapter, CONFIG, { toast: m => SB.toast(m) });
 }
 
 function $(id) { return document.getElementById(id); }
