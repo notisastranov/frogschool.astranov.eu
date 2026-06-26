@@ -29,6 +29,15 @@
       <div class="sb-card">
         <form id="bookingForm">
           <div id="progressiveForm"></div>
+          <div class="sb-agreement-box" id="sbAgreementBox">
+            <b>Agreement document before verification</b>
+            <p class="sb-muted">The participant acknowledges this is an active athletic activity, accepts the risk, and agrees to follow all Astranov FrogSchool team instructions.</p>
+            <div id="sbAgreementPreview" class="sb-muted">Admin has not uploaded the agreement document yet.</div>
+            <div class="sb-actions" style="margin-top:8px">
+              <a class="sb-btn ghost tiny sb-hidden" id="sbOpenAgreement" href="#" target="_blank" rel="noopener">Open agreement</a>
+              <a class="sb-btn ghost tiny sb-hidden" id="sbDownloadAgreement" href="#" download="frogschool-agreement.jpg">Download agreement</a>
+            </div>
+          </div>
           <div id="productInfo" class="sb-product-info"></div>
           <div class="sb-divider"></div>
           <div class="sb-actions">
@@ -38,9 +47,18 @@
       </div>
       <section class="sb-card admin-only sb-hidden" id="adminPanel">
         <h3 style="margin:0 0 8px;color:var(--sb-accent);font-family:var(--sb-display)">Admin master data</h3>
-        <div class="sb-field"><label class="sb-label">Products (name|price|includes)</label><textarea id="productsEditor" rows="4"></textarea></div>
-        <div class="sb-field"><label class="sb-label">Timeslots (HH:MM=capacity)</label><textarea id="timeslotsEditor" rows="3"></textarea></div>
-        <button class="sb-btn" type="button" id="saveMasterBtn">Save admin data</button>
+        <div class="sb-admin-grid">
+          <div class="sb-field"><label class="sb-label">Products (name|price|includes)</label><textarea id="productsEditor" rows="4"></textarea></div>
+          <div class="sb-field"><label class="sb-label">Employees / instructors (one per line)</label><textarea id="employeesEditor" rows="3"></textarea></div>
+          <div class="sb-field"><label class="sb-label">Agents (one per line)</label><textarea id="agentsEditor" rows="2"></textarea></div>
+          <div class="sb-field"><label class="sb-label">Referrals (one per line)</label><textarea id="referralsEditor" rows="2"></textarea></div>
+          <div class="sb-field"><label class="sb-label">Timeslots (HH:MM=capacity)</label><textarea id="timeslotsEditor" rows="3"></textarea></div>
+          <div class="sb-field"><label class="sb-label">Agreement JPEG upload</label><input id="sbAgreementUpload" type="file" accept="image/jpeg,image/png,image/webp"></div>
+        </div>
+        <div class="sb-actions" style="margin-top:8px">
+          <button class="sb-btn" type="button" id="saveMasterBtn">Save admin data</button>
+          <button class="sb-btn ghost" type="button" id="sbSaveAgreementBtn">Save agreement</button>
+        </div>
       </section>
     </section>
 
@@ -82,27 +100,57 @@
   </div>
 </div>
 
+<div class="sb-modal" id="sbChatModal">
+  <div class="sb-sheet">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <h2 style="font-family:var(--sb-display);color:var(--sb-accent);margin:0">Messenger</h2>
+      <button class="sb-btn ghost tiny" id="sbCloseChat" type="button">Close</button>
+    </div>
+    <div class="sb-field admin-only sb-hidden" id="sbChatClientRow"><label class="sb-label">Client phone / history</label><input id="sbChatClientPhone" type="tel" inputmode="tel"></div>
+    <div class="sb-msgs" id="sbMessages">No messages yet.</div>
+    <div class="sb-field"><label class="sb-label">Message</label><textarea id="sbChatText" rows="3"></textarea></div>
+    <div class="sb-field"><label class="sb-label">File</label><input id="sbChatFile" type="file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"></div>
+    <button class="sb-btn" type="button" id="sbSendMsg">Send</button>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+window.ASTRANOV_SUPERBOOKING_CONFIG = {
+  siteId: 'frogschool',
+  domain: 'frogschool.astranov.eu',
+  businessType: 'diving_school',
+  mode: 'slot',
+  database: 'central',
+  rpcPrefix: 'fs_',
+  decentral: { enabled: true, nodeUrl: 'http://127.0.0.1:8787' },
+  branding: { title: 'AstranoV FrogSchool', subtitle: 'Diving · MartialSthenics · Rhodes' },
+  videoUrl: 'https://www.youtube.com/watch?v=DH02kmLRgUA&t=71s'
+};
+</script>
 <script src="core/superbooking-config.js"></script>
 <script src="core/superbooking-decentral.js"></script>
 <script src="core/booker-fields.js"></script>
 <script src="core/booker-core.js"></script>
 <script src="core/booker-adapters.js"></script>
+<script src="core/superbooking-messenger.js"></script>
+<script src="core/superbooking-agreement.js"></script>
 <script>
 const SB = SuperBooking;
 const CONFIG = SB.mergeConfig(window.ASTRANOV_SUPERBOOKING_CONFIG);
 CONFIG.businessType = CONFIG.businessType || 'diving_school';
 CONFIG.mode = CONFIG.mode || 'slot';
 CONFIG.domain = CONFIG.domain || 'frogschool.astranov.eu';
-if (!CONFIG.branding.title || CONFIG.branding.title === 'Super Booker') CONFIG.branding = { title: 'AstranoV FrogSchool', subtitle: 'Diving · MartialSthenics · Rhodes' };
 if (!CONFIG.products?.length) CONFIG.products = [{ name: '1 Hour Training Session of MartialSthenics with 1 Scuba Try Dive, Transfer And Video Clip.', price: 65, includes: '1 hour MartialSthenics, 1 scuba try dive, transfer, video clip' }];
 if (!Object.keys(CONFIG.timeslots || {}).length) CONFIG.timeslots = { '09:00': 4, '11:00': 4, '14:00': 6, '16:30': 3 };
 if (!CONFIG.employees?.length) CONFIG.employees = ['Marina', 'Nikolas', 'Eleni', 'Captain Notis'];
+if (!CONFIG.agents?.length) CONFIG.agents = ['Direct', 'Hotel desk', 'Travel agent'];
 if (!CONFIG.referrals?.length) CONFIG.referrals = ['Google', 'YouTube', 'Instagram', 'Hotel', 'Friend', 'Walk-in'];
 if (!CONFIG.contact?.phone) CONFIG.contact = { phone: '+306971930225', vhf: 'FrogSchool', email: 'notiscs@gmail.com', whatsapp: '306971930225', address: 'Rhodes, Greece' };
 
 const adapter = SuperBookingAdapters.slot(CONFIG);
 let rows = [], formState = { activeStage: 'schedule', values: {} };
+let messenger = null, agreement = null;
 
 async function init() {
   SB.initShell(CONFIG);
@@ -115,6 +163,8 @@ async function init() {
   renderForm();
   renderPortal();
   bind();
+  messenger = SuperBookingMessenger.init(adapter, CONFIG, { openLogin, toast: m => SB.toast(m) });
+  agreement = SuperBookingAgreement.init(adapter, CONFIG, { toast: m => SB.toast(m) });
 }
 
 function $(id) { return document.getElementById(id); }
@@ -142,7 +192,7 @@ function readBooking() {
   const d = SB.readFormData(f);
   const p = adapter.productByName(d.product);
   if (!d.client_name || !d.client_phone) { SB.toast('Name and phone required.'); return null; }
-  if (!d.agreement_ack) { SB.toast('Type agreement acknowledgement before verifying.'); return null; }
+  if (!d.agreement_ack) { SB.toast('Open/download the agreement before verification.'); return null; }
   return {
     id: null, client_name: d.client_name, client_phone: d.client_phone, client_email: d.client_email,
     date: d.date, time: d.time, product: d.product || p?.name, productPrice: p?.price || 0, productIncludes: p?.includes || '',
@@ -168,7 +218,7 @@ async function verifyCash() {
 
 function sendConfirmationEmail(r) {
   const sub = encodeURIComponent('FrogSchool reservation confirmation');
-  const body = encodeURIComponent(`FrogSchool verified reservation\n\nCustomer: ${r.client_name}\nPhone: ${r.client_phone}\nEmail: ${r.client_email}\nDate: ${r.date}\nTime: ${r.time}\nProduct: ${r.product}\nPrice: €${Number(r.productPrice).toFixed(2)}\nPayment: CASH ON ARRIVAL ONLY`);
+  const body = encodeURIComponent(`FrogSchool verified reservation\n\nCustomer: ${r.client_name}\nPhone: ${r.client_phone}\nEmail: ${r.client_email}\nDate: ${r.date}\nTime: ${r.time}\nProduct: ${r.product}\nPrice: €${Number(r.productPrice).toFixed(2)}\nPayment: CASH ON ARRIVAL ONLY\n\nPlease bring the signed agreement document on arrival.`);
   location.href = `mailto:${r.client_email}?subject=${sub}&body=${body}`;
 }
 
@@ -178,12 +228,14 @@ function renderPortal() {
   $('portalLocked').classList.toggle('sb-hidden', !!s);
   $('portalList').classList.toggle('sb-hidden', !s);
   $('loginBtn').textContent = s ? 'Logout' : 'Login';
-  $('adminPanel').classList.toggle('sb-hidden', !s || !['admin', 'super_admin'].includes(s.role));
+  const isStaff = s && ['admin', 'super_admin', 'employee'].includes(s.role);
+  $('adminPanel').classList.toggle('sb-hidden', !isStaff || !['admin', 'super_admin'].includes(s.role));
+  $('sbChatClientRow')?.classList.toggle('sb-hidden', !isStaff);
   if (!s) { $('bookingList').innerHTML = 'Login required.'; return; }
   let list = [...rows];
   if (s.role === 'customer') list = list.filter(r => clean(r.phone) === clean(s.phone));
-  const q = ($('search')?.value || '').toLowerCase();
-  if (q) list = list.filter(r => Object.values(r).join(' ').toLowerCase().includes(q));
+  const qv = ($('search')?.value || '').toLowerCase();
+  if (qv) list = list.filter(r => Object.values(r).join(' ').toLowerCase().includes(qv));
   const st = $('statusFilter')?.value;
   if (st && st !== 'all') list = list.filter(r => r.status === st);
   $('bookingList').innerHTML = list.length ? list.map(r => `<article class="sb-card" style="margin-bottom:8px"><b>${SB.esc(r.customer)} · ${r.date} ${r.time}</b><div class="sb-muted">${SB.esc(r.product)} · €${Number(r.productPrice).toFixed(2)} · ${SB.esc(r.status)}</div></article>`).join('') : 'No reservations for this account.';
@@ -191,17 +243,27 @@ function renderPortal() {
 
 function fillAdminEditors() {
   $('productsEditor').value = CONFIG.products.map(p => `${p.name}|${p.price}|${p.includes || ''}`).join('\n');
+  $('employeesEditor').value = (CONFIG.employees || []).join('\n');
+  $('agentsEditor').value = (CONFIG.agents || []).join('\n');
+  $('referralsEditor').value = (CONFIG.referrals || []).join('\n');
   $('timeslotsEditor').value = Object.entries(CONFIG.timeslots).map(([t, c]) => `${t}=${c}`).join('\n');
+}
+
+function parseLines(id) {
+  return ($(id)?.value || '').split(/\n+/).map(s => s.trim()).filter(Boolean);
 }
 
 async function saveMaster() {
   const s = adapter.getSession();
   if (!s || !['admin', 'super_admin'].includes(s.role)) return SB.toast('Admin only.');
   CONFIG.products = $('productsEditor').value.split(/\n+/).map(line => { const [name, price, ...rest] = line.split('|'); return { name: (name || '').trim(), price: Number(price) || 0, includes: rest.join('|').trim() }; }).filter(p => p.name);
+  CONFIG.employees = parseLines('employeesEditor');
+  CONFIG.agents = parseLines('agentsEditor');
+  CONFIG.referrals = parseLines('referralsEditor');
   CONFIG.timeslots = {};
   $('timeslotsEditor').value.split(/\n+/).forEach(l => { const m = l.match(/^(\d{1,2}:\d{2})\s*=\s*(\d+)$/); if (m) CONFIG.timeslots[m[1].padStart(5, '0')] = Number(m[2]); });
   try {
-    await adapter.rpc('save_master_data', { p_token: s.token, p_products: CONFIG.products, p_employees: CONFIG.employees, p_agents: CONFIG.agents || [], p_referrals: CONFIG.referrals, p_timeslots: CONFIG.timeslots });
+    await adapter.rpc('save_master_data', { p_token: s.token, p_products: CONFIG.products, p_employees: CONFIG.employees, p_agents: CONFIG.agents, p_referrals: CONFIG.referrals, p_timeslots: CONFIG.timeslots });
   } catch (e) { /* local ok */ }
   renderForm();
   SB.toast('Admin data saved.');
@@ -221,6 +283,7 @@ function bind() {
   $('saveMasterBtn').onclick = saveMaster;
   $('search') && ($('search').oninput = renderPortal);
   $('statusFilter') && ($('statusFilter').onchange = renderPortal);
+  $('sbChatClientPhone')?.addEventListener('input', () => messenger?.renderChat?.());
   $('loginBtn').onclick = async () => {
     const s = adapter.getSession();
     if (s) { adapter.setSession(null); rows = []; renderPortal(); return; }
@@ -234,10 +297,10 @@ function bind() {
       rows = await adapter.listReservations();
       closeLogin();
       renderPortal();
+      agreement?.loadAgreement?.();
       SB.toast('Logged in.');
     } catch (err) { SB.toast(err.message || 'Login failed.'); }
   };
-  $('messengerBtn').onclick = () => SB.toast('Messenger opens after login — full chat in next release.');
 }
 
 window.openLogin = () => $('loginModal').classList.add('show');
