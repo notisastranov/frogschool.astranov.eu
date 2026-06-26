@@ -17,11 +17,16 @@
 
   <section class="sb-profile-block">
     <div class="sb-media-cover sb-media-zone" data-media="cover" id="sbMediaCover"></div>
-    <div class="sb-topbar-spacer"></div>
-    <div class="sb-media-profile sb-media-zone" data-media="profile" id="sbMediaProfile"></div>
+    <div class="sb-profile-row">
+      <div class="sb-media-profile sb-media-zone" data-media="profile" id="sbMediaProfile"></div>
+      <div class="sb-profile-meta">
+        <b id="sbProfileTitle">FrogSchool</b>
+        <span id="sbProfileSubtitle">frogschool.astranov.eu</span>
+      </div>
+    </div>
   </section>
 
-  <section class="sb-card sb-video-card"><div class="sb-video-shell sb-media-zone" data-media="video" id="sbVideoShell"></div></section>
+  <section class="sb-card sb-video-card sb-video-below-profile"><div class="sb-video-shell sb-media-zone" data-media="video" id="sbVideoShell"></div></section>
   <div class="sb-media-bg-zone sb-media-zone sb-hidden" data-media="background" id="sbMediaBgZone" title="Page background">◎ Background</div>
 
   <section class="sb-section-title"><h2>Reserve Your Session</h2><small class="sb-muted" id="activeUserText">Guest · progressive booking</small></section>
@@ -182,6 +187,8 @@ let messenger = null, agreement = null, siteMedia = null;
 
 async function init() {
   SB.initShell(CONFIG);
+  $('sbProfileTitle').textContent = CONFIG.branding?.title || 'FrogSchool';
+  $('sbProfileSubtitle').textContent = CONFIG.branding?.subtitle || CONFIG.domain || '';
   $('contactAddress').textContent = CONFIG.contact.address || '';
   SB.renderContactBar('sbContactBarNav', CONFIG.contact, CONFIG.branding);
   await adapter.connect();
