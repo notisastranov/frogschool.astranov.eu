@@ -102,12 +102,13 @@
 <div class="sb-modal" id="loginModal">
   <div class="sb-sheet">
     <div style="display:flex;justify-content:space-between;align-items:center"><h2 style="font-family:var(--sb-display);color:var(--sb-accent);margin:0">Login / Sign Up</h2><button class="sb-btn ghost tiny" onclick="closeLogin()">Close</button></div>
-    <p class="sb-muted">Phone, email and password — new users are registered automatically.</p>
+    <p class="sb-muted">Astranov Identity on <a href="https://astranov.eu" target="_blank" rel="noopener" style="color:var(--sb-accent)">astranov.eu</a> (Google · email · phone) signs you in here too when owner. Guests: phone + email + password below.</p>
+    <p id="loginError" class="sb-muted" style="color:var(--sb-bad,#ff7f9a);min-height:18px;margin:6px 0"></p>
     <form id="loginForm">
-      <div class="sb-field"><label class="sb-label">Phone</label><input name="phone" type="tel" required></div>
-      <div class="sb-field"><label class="sb-label">Email</label><input name="email" type="email" required></div>
-      <div class="sb-field"><label class="sb-label">Password</label><input name="password" type="password" required></div>
-      <button class="sb-btn">Enter</button>
+      <div class="sb-field"><label class="sb-label">Phone</label><input name="phone" type="tel" required autocomplete="tel"></div>
+      <div class="sb-field"><label class="sb-label">Email</label><input name="email" type="email" required autocomplete="email"></div>
+      <div class="sb-field"><label class="sb-label">Password</label><input name="password" type="password" required autocomplete="current-password"></div>
+      <button class="sb-btn" type="submit">Enter</button>
     </form>
   </div>
 </div>
@@ -333,6 +334,8 @@ function bind() {
   };
   $('loginForm').onsubmit = async e => {
     e.preventDefault();
+    const errEl = $('loginError');
+    if (errEl) errEl.textContent = '';
     const fd = new FormData(e.target);
     try {
       await adapter.login(fd.get('phone'), fd.get('email'), fd.get('password'));
@@ -341,8 +344,13 @@ function bind() {
       renderPortal();
       agreement?.loadAgreement?.();
       siteMedia?.refresh?.();
+      siteEditor?.refresh?.();
       SB.toast('Logged in.');
-    } catch (err) { SB.toast(err.message || 'Login failed.'); }
+    } catch (err) {
+      const msg = err.message || 'Login failed.';
+      if (errEl) errEl.textContent = msg;
+      SB.toast(msg);
+    }
   };
 }
 
